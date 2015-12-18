@@ -10,7 +10,7 @@ struct AirKitConfig {
   char thingspeakApi[32];
   byte deltaON;       // Minimum delta to activate the air flow
   byte deltaOFF;      // Maximum delta to disable the air flow
-  bool Smode;          // Winter = 0
+  bool Smode;         // Winter = 0
 };
 
 //Timer config
@@ -26,8 +26,8 @@ struct AirKitConfig {
 #define eeAddrTSAPI        64     // address in the EEPROM  for SSID
 #define eeSizeTSAPI        32     // size in the EEPROM  for SSID
 #define eeAddrDeltaON      510    
-#define eeAddrDeltaOff     511
-#define eeAddrSummerMode   512   
+#define eeAddrDeltaOFF     511
+#define eeAddrSmode        512   
 
 enum waterLevel {
   DOWN = 0,

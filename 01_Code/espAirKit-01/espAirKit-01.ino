@@ -108,8 +108,8 @@ float tempDelta = 0; //Temperature delta between inside and outside (tempOut - t
 bool fanState = 0;   //State of the fan, 0 = stopped 1 = running
 
 //EEPROM Function declarations
-//void eepromWrite(void);
-//void eepromRead(void);
+void eepromWrite(void);
+void eepromRead(void);
 
 // Serial string management variables
 void executeCommand();
@@ -144,7 +144,7 @@ void setup() {
   ioInits();
 
   conf.mac = getMacAddress();
-  //eepromRead();
+  eepromRead();
 
   digitalWrite(FAN, LOW);
 
@@ -162,10 +162,6 @@ void setup() {
   sensorsIn.setResolution(insideThermometer, 12);
   sensorsOut.setResolution(insideThermometer, 12);
   
-  // Parameters initialisation from EEPROM
-  conf.deltaON = FAN_ON;
-  conf.deltaOFF = FAN_OFF;
-  conf.Smode = MODE;
 }
 
 /* void loop(void) 
@@ -201,8 +197,8 @@ void loop() {
   //Timer 3 action every 10mn
   if (tick3Occured == true){
     tick3Occured = false;
-    //thingSpeakWrite ( conf.thingspeakApi, conf.mac, temperature, humidity, NAN,
-    //                  conf.dayStart, conf.dayTime, conf.pumpFreq, conf.floodedTime);
+    thingSpeakWrite ( conf.thingspeakApi, conf.mac, tempIn, tempOut, fanState,
+                      NAN, conf.Smode, conf.deltaON, conf.deltaOFF);
   }
  
   //Give the time to th os to do his things
@@ -461,7 +457,7 @@ void ioInits(void)
  *  
  *  Input  : 
  *  Output :
-*//*
+*/
 void eepromWrite(void)
 {
   char letter;
@@ -499,20 +495,19 @@ void eepromWrite(void)
     addr++;
   }
 
-  EEPROM.write(eeAddrDayStart, conf.dayStart);     // Hour of the day that the lamp starts
-  EEPROM.write(eeAddrDayTime, conf.dayTime);      // Number of hours of daylight (LAMP ON)
-  EEPROM.write(eeAddrPumpFreq, conf.pumpFreq);    // Time between 2 pump cycles
-  EEPROM.write(eeAddrFloodedTime, conf.floodedTime);  // Time of water at high level
+  EEPROM.write(eeAddrDeltaON,  conf.deltaON);
+  EEPROM.write(eeAddrDeltaOFF, conf.deltaOFF);
+  EEPROM.write(eeAddrSmode,    conf.Smode);
   
   EEPROM.end();
 }
-*/
+
 /* void eepromRead(void)
  *  Read all application parameters from eeprom 
  *  
  *  Input  : 
  *  Output :
-*//*
+*/
 void eepromRead(void)
 {
   char letter;
@@ -520,6 +515,7 @@ void eepromRead(void)
   //Activate eeprom
   EEPROM.begin(512);
 
+  // Read string values from eeprom
   // Get wifi SSID from eeprom
   addr = eeAddrSSID;
   for (i = 0 ; i < eeSizeSSID ; i++)
@@ -549,16 +545,16 @@ void eepromRead(void)
       break;
     addr++;
   }
-  
-  conf.dayStart    = EEPROM.read(eeAddrDayStart);     // Hour of the day that the lamp starts
-  conf.dayTime     = EEPROM.read(eeAddrDayTime);      // Number of hours of daylight (LAMP ON)
-  conf.pumpFreq   = EEPROM.read(eeAddrPumpFreq);    // Time between 2 pump cycles
-  conf.floodedTime = EEPROM.read(eeAddrFloodedTime);  // Time of water at high level
+
+  // Read Bytes values from eeprom
+  conf.deltaON    = EEPROM.read(eeAddrDeltaON);
+  conf.deltaOFF   = EEPROM.read(eeAddrDeltaOFF); 
+  conf.Smode      = EEPROM.read(eeAddrSmode);
 
   Serial.println("Application parameters read from eeprom");
   printInfo();
 }
-*/
+
 /* void serialStack(void)
  *  Stack all serial char received in one string until a '\n'
  *  Set stringComplete to True when '\n' is received
@@ -590,12 +586,6 @@ void serialStack()
 /* void executeCommand(void)
  *  Execute received serial command
  *  Commandes list :
- *   - "i", "I", "info", "Info" : Return basic system informations, mainly for debug purpose
- *   - "FXX"                    : Setup the minimum temperature delta to activate the Airflow (0 to 100 C)
- *   - "fXX"                    : Setup the maximum temperature delta to disable the Airflow (0 to 100 C)
- *   - "S1" or "S0"             : Enable ("S1") or disable ("S0") the summer mode
- *   
- *   
  *  - A > change delta ON
  *  - C > change delta OFF
  *  - M > change summer/winter mode
@@ -664,7 +654,7 @@ void executeCommand()
       case 'W': case 'w':
         inputString.remove(0,1);
         Serial.println("W > Write parameters in eeprom");
-        //eepromWrite();
+        eepromWrite();
         break;
       // Reset default timing config
       case 'R': case 'r':
