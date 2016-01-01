@@ -23,8 +23,6 @@
  *  Commande detail :
  *  - A > change winter delta ON
  *  - C > change winter delta OFF
- *  - C > change summer delta ON
- *  - D > change summer delta OFF
  *  - M > change summer/winter mode
  *  - P > Change the wifi pasword
  *  - S > Change the SSID
